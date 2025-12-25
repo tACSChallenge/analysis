@@ -4,7 +4,7 @@ function extractIAF(data_path,labnum, subnum);
 % it also plots a summary figure at the end with the individual power
 % spectra and an average across participants
 
-% input
+%input
 %addpath('D:\code\scripts_yifan');
 %labnum=18;
 %subnum=[1:2 5:22];
@@ -17,19 +17,36 @@ for n=1:length(subnum)
     iaf(n,:)=paf;
     sub=subnum(n);
     % Import the Excel file
+    
+    % Add subject/lab numbers with a leading zero when < 10 (e.g., 3 -> "03"),
     if sub<10
         sub = strcat('0',num2str(sub));
     else
         sub = num2str(sub);
     end
-    prefix=strcat('L', num2str(labnum), '_P', sub);
-    filn=dir(strcat(data_path, '\', prefix, '\*Meta_Data.xlsx'));
-    data = readtable(strcat(filn.folder, '\', filn.name));
+    
+    if labnum<10
+        labStr = ['0',num2str(labnum)];
+    else
+        labStr = num2str(labnum);
+    end
+    
+    prefix=strcat('L', labStr, '_S', sub);
+    prefixFolder = fullfile(data_path, prefix);
+
+    filn = dir(fullfile(prefixFolder, '*Meta_Data.xlsx'));
+    if isempty(filn)
+        filn = dir(fullfile(prefixFolder, 'metadata', '*Meta_Data.xlsx'));
+    end
+
+    metaFile = fullfile(filn(1).folder, filn(1).name);
+    data = readtable(metaFile);
     % Add or update the 'IAF' column with the value stored in 'iaf'
     data.IAF = iaf(n,1);% add IAF from eyes closed pre
     % Export the updated table as a TSV file
-    outfile=strcat(strcat(filn.folder, '\', filn.name(1:end-4)), 'tsv');
-    writetable(data, outfile, 'FileType', 'text', 'Delimiter', '\t');
+    [~, baseName, ~] = fileparts(metaFile);
+     outfile = fullfile(filn(1).folder, [baseName '.tsv']);    
+     writetable(data, outfile, 'FileType', 'text', 'Delimiter', '\t');
     % get power spectra from eyes closed and eyes open pre and post for
     % plotting and sanity checking
     PS_pre_ec(n,:)=psd(1,:);
@@ -79,12 +96,12 @@ hold off
 subplot(2,1,2);
 cols=['b' 'r'];
 for k=1:2
-    plot(f, mean_PS_pre(k,:), cols(k), 'LineWidth', 2); hold on;
+    plot(f, mean_PS_post(k,:), cols(k), 'LineWidth', 2); hold on;
     
     % Shaded area for ±SE
     x = f;
-    y1 = mean_PS_pre(k,:) - mnse_PS_pre(k,:);
-    y2 = mean_PS_pre(k,:) + mnse_PS_pre(k,:);
+    y1 = mean_PS_post(k,:) - mnse_PS_post(k,:);
+    y2 = mean_PS_post(k,:) + mnse_PS_post(k,:);
     fill([x', fliplr(x')], [y1, fliplr(y2)], cols(k), 'FaceAlpha', 0.3, 'EdgeColor', 'none');
     
     xlabel('Frequency (Hz)');
@@ -96,3 +113,4 @@ end
 legend('Mean EC', '±SE EC', 'Mean EO', '±SE EO');
 hold off
 title('Post');
+
