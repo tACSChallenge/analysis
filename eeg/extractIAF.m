@@ -9,6 +9,7 @@ function extractIAF(data_path,labnum, subnum,sampling_rate);
 %labnum=18;
 %subnum=[1:2 5:22];
 %subnum=7;
+%sampling_rate =500;
 %data_path='D:\data';
 
 figure;
@@ -96,4 +97,5 @@ end
 legend('Mean EC', '±SE EC', 'Mean EO', '±SE EO');
 hold off
 title('Post');
+
 
