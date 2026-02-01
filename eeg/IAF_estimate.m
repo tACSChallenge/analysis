@@ -65,8 +65,17 @@ eeglab nogui;
 for i=1:4
 
 % read the EEG data
-EEG = pop_loadbv(full_data_path, strcat(File_names{i},'.vhdr'));
+p = fullfile(data_path, prefix);
+vhdr = [File_names{i} '.vhdr'];
 
+if ~exist(fullfile(p, vhdr), 'file')
+    p = fullfile(data_path, ['sub-' prefix], 'eeg');
+    vhdr = ['sub-' File_names{i} '.vhdr'];
+end
+
+EEG = pop_loadbv(p, vhdr);
+
+std_EEG = std(EEG.data);
 std_EEG = std(EEG.data);
 
 
@@ -157,6 +166,7 @@ psd(i,:) = paf_sums.ps;
 %end
 
 end
+
 
 
 
