@@ -1,4 +1,4 @@
-function extractIAF(data_path,labnum, subnum);
+function extractIAF(data_path,labnum, subnum,sampling_rate);
 
 %% this function will extract IAF for participants and store the resulting value in metadata; 
 % it also plots a summary figure at the end with the individual power
@@ -13,7 +13,7 @@ function extractIAF(data_path,labnum, subnum);
 
 figure;
 for n=1:length(subnum)
-    [paf,psd,f]=IAF_estimate(data_path,labnum,subnum(n));
+    [paf,psd,f]=IAF_estimate(data_path,labnum,subnum(n),sampling_rate);
     iaf(n,:)=paf;
     sub=subnum(n);
     % Import the Excel file
@@ -96,3 +96,4 @@ end
 legend('Mean EC', '±SE EC', 'Mean EO', '±SE EO');
 hold off
 title('Post');
+
