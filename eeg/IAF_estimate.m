@@ -5,6 +5,7 @@ function [paf,psd,f] = IAF_estimate(data_path,labnum,subnum,sampling_rate)
 %% Input: data_path: the path where we store the Data, e.g., 'Z\Data'
 %         labnum: ID of the lab, must be numeric
 %         subnum: ID of the subject, must be numeric
+%         sampling_rate: EEG sampling rate in Hz, must be numeric
 
 %% Output: paf: peak alpha frequency
 %           where paf(1) is the PAF of pre eyes-closed EEG recording
@@ -156,5 +157,6 @@ psd(i,:) = paf_sums.ps;
 %end
 
 end
+
 
 
