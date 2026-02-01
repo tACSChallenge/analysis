@@ -6,9 +6,9 @@ function extractIAF(data_path,labnum, subnum,sampling_rate);
 
 % input
 %addpath('D:\code\scripts_yifan');
-%labnum=18;
-%subnum=[1:2 5:22];
-%subnum=7;
+%labnum=18; (must be numeric)
+%subnum=[1:2 5:22]; (must be numeric)
+%subnum=7; (must be numeric)
 %sampling_rate =500; (EEG sampling rate)
 %data_path='D:\data';
 
@@ -23,7 +23,7 @@ for n=1:length(subnum)
     else
         sub = num2str(sub);
     end
-prefix = strcat('L', num2str(labnum), '_S', sub);
+prefix = sprintf('L%02d_S%s', labnum, sub);
 
 % 1) try：data_path/prefix/*Meta_Data.xlsx
 cand_dirs = {
@@ -131,6 +131,7 @@ end
 legend('Mean EC', '±SE EC', 'Mean EO', '±SE EO');
 hold off
 title('Post');
+
 
 
 
