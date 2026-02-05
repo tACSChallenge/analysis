@@ -1,10 +1,11 @@
 
                    
-function [paf,psd,f] = IAF_estimate(data_path,labnum,subnum)
+function [paf,psd,f] = IAF_estimate(data_path,labnum,subnum,sampling_rate)
 
 %% Input: data_path: the path where we store the Data, e.g., 'Z\Data'
 %         labnum: ID of the lab, must be numeric
 %         subnum: ID of the subject, must be numeric
+%         sampling_rate: EEG sampling rate in Hz, must be numeric
 
 %% Output: paf: peak alpha frequency
 %           where paf(1) is the PAF of pre eyes-closed EEG recording
@@ -45,7 +46,7 @@ else
 subnum = num2str(subnum);
 end
 
-prefix = strcat('L',labnum,'_P',subnum);
+prefix = strcat('L',labnum,'_S',subnum);
 prefix_S = strcat('L',labnum,'_S',subnum);
 
 full_data_path = fullfile(data_path,prefix);
@@ -64,8 +65,17 @@ eeglab nogui;
 for i=1:4
 
 % read the EEG data
-EEG = pop_loadbv(full_data_path, strcat(File_names{i},'.vhdr'));
+p = fullfile(data_path, prefix);
+vhdr = [File_names{i} '.vhdr'];
 
+if ~exist(fullfile(p, vhdr), 'file')
+    p = fullfile(data_path, ['sub-' prefix], 'eeg');
+    vhdr = ['sub-' File_names{i} '.vhdr'];
+end
+
+EEG = pop_loadbv(p, vhdr);
+
+std_EEG = std(EEG.data);
 std_EEG = std(EEG.data);
 
 
@@ -145,8 +155,8 @@ end
 save(fullfile(output_folder, File_names{i}), 'EEG');
 
 %% IAF estimation
-%[paf_sums,~,f] = restingIAF(double(EEG.data), 1, 1, [1, 40], 500,  [7 13], 11, 5);
-[paf_sums,~,f] = restingIAF_sh(double(EEG.data), 1, 1, [1, 40], 500,  [7 13], 11, 5);
+%[paf_sums,~,f] = restingIAF(double(EEG.data), 1, 1, [1, 40], sampling_rate,  [7 13], 11, 5);
+[paf_sums,~,f] = restingIAF_sh(double(EEG.data), 1, 1, [1, 40], sampling_rate,  [7 13], 11, 5);
 
 paf(i) = paf_sums.paf;
 %if ~any(isnan(paf_sums.muSpec))
@@ -156,4 +166,8 @@ psd(i,:) = paf_sums.ps;
 %end
 
 end
+
+
+
+
 
