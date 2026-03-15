@@ -81,7 +81,7 @@ std_EEG = std(EEG.data);
 
 % Filtering
 EEG = pop_eegfiltnew(EEG, 1, 40);
-EEG = pop_eegfiltnew(EEG, 49, 51, [], 1);  
+
 
 % divide into 1s Epochs
 epoch_length_sec = 1;
