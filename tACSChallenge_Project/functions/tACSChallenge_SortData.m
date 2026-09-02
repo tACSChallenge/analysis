@@ -4,39 +4,39 @@ function trials_sorted = tACSChallenge_SortData(data_path, subj, conditions)
 %% and June 2022 (correction for imperfect stimulation frequency)
 %% modified by Florian Kasten in March 2022 (correction of target onsets)
 %% modified by BZ in June 2025 (check for number of blocks)
-%% modified by AG in November 2025
+%% modified by Anne-Fiona Griesfeller (left+right button presses, target detection)
 
-% data_path refers to the folder the data is located in (each subject in a separate folder).
-% subj is the subject folder (e.g., 'sub-L18_S01\beh').
-% conditions is a cell array of filename patterns, e.g.:
-% {'*_A_*.tsv','*_B_*.tsv','*_C_*.tsv','*_Sh_*.tsv'}
+if numel(conditions) ~= 4
+    error(['conditions must contain exactly four filename patterns, one per ' ...
+        'condition, in the order A, B, C, sham. Received %d.'], numel(conditions));
+end
 
-trials_sorted = cell(length(conditions)-4,1);
+trials_sorted = cell(4,1);
 phase_bins = 0:pi/4:2*pi;
 
-for c = 1:length(conditions)-4
+for c = 1:4
 
-    curr_cond = conditions{c};
     % subject folder plus beh subfolder
     subj_path = fullfile(data_path, subj, 'beh');
 
-   curr_files = dir(fullfile(subj_path, curr_cond));
-   
-   if isempty(curr_files)
-       curr_cond = conditions{c+4};
-       curr_files = dir(fullfile(subj_path, curr_cond));
-   end
-       
-trialcounter = 0;
-trials_sorted{c} = [];
+    curr_files = dir(fullfile(subj_path, conditions{c}));
+    if ~isempty(curr_files)
+        [~, ord] = sort(string({curr_files.name}));
+        curr_files = curr_files(ord);
+    end
 
-% For active conditions (A,B,C) we expect exactly 3 blocks
-if length(curr_files) ~= 3 && ~contains(curr_cond, '_Sh_') && ~contains(curr_cond, '_Sh.')
-    error('number of blocks for at least one condition is not three as expected');
-end
-if length(curr_files) ~= 4 && (contains(curr_cond, '_Sh_') || contains(curr_cond, '_Sh.'))
-    error('number of sham blocks is not four as expected');
-end
+    curr_cond = conditions{c};
+
+    trialcounter = 0;
+    trials_sorted{c} = [];
+    
+    isSham = contains(curr_cond, 'Sh');
+    if ~isSham && numel(curr_files) ~= 3
+        error('number of blocks for at least one condition is not three as expected');
+    end
+    if isSham && numel(curr_files) ~= 4
+        error('number of sham blocks is not four as expected');
+    end
 
     for b = 1:length(curr_files)
 
@@ -59,27 +59,31 @@ RespLatR = find(respOnsetsR > 0);
 % combine both: any press on either button counts as a response
 RespLat = sort(unique([RespLatL; RespLatR]));
 
-        %% leverage the inactive central LED to remove intensity offset from all LED channels
+        %% remove offset using central LED
         data.LEDs = data.LEDs - repmat(data.LEDs(:,1), 1, size(data.LEDs,2));
-        %% merge LED signals into one
-        LED = max(data.LEDs, [], 2);
-        %% get onsets of target LED
-        LEDdiff = diff(LED);
-        LEDdiff(LEDdiff < 0) = 0;
-        %% sample indices of LED onsets (targets)
-        LEDLat = find(LEDdiff > 0);
-        % if no LED targets were detected in this block, skip it
-if isempty(LEDLat)
-    warning('No LED targets found for subject %s, condition %s, block %d. Skipping this block.', ...
-            subj, conditions{c}, b);
-    continue
-end
+
+%% merge LED signals (handle increase AND decrease)
+        LED = max(abs(data.LEDs), [], 2);
+
+%% define baseline
+        baseline = median(LED);
+
+% detect deviation from baseline
+        isTarget = LED ~= baseline;
+
+% detect onsets only
+        LEDLat = find(diff(isTarget) == 1);
+
+% safety check
+        if isempty(LEDLat)
+        continue
+    end
 
         %% tACS signal
         tACS = data.tACS;
         tACS = tACS - mean(tACS);
-
-        % clean the signal - fit a sine wave starting a few seconds before the first target
+        
+        % clean the signal
         start_idx = max(LEDLat(1) - round(1*Fs), 1);  % 1 s before first target, safety against negative indices
         tACS_to_fit = tACS(start_idx:end);
 
@@ -138,5 +142,6 @@ end
         end  % trials in block
 
     end  % blocks
+
 
 end  % conditions

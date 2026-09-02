@@ -1,104 +1,107 @@
-tACS Challenge Analysis README
-Written by Anne-Fiona Griesfeller, January 26
+tACS Challenge Analysis ReadMe
+Written by Anne-Fiona Griesfeller
 
-Overview
+1. Required Matlab version and toolboxes:
 
-*How to Run the Analyses*
+* MATLAB R2020b or later
+* Signal Processing Toolbox: 			https://fr.mathworks.com/products/signal.html
+* Statistics and Machine Learning Toolbox:	https://fr.mathworks.com/products/statistics.html 
+* Circular Statistics Toolbox (CircStat):	https://fr.mathworks.com/matlabcentral/fileexchange/10676-circular-statistics-toolbox-directional-statistics
 
-All analyses are run via Run_all.m located in tACSChallenge_Project/scripts/
+1.1 For optional Bayesian analysis R with: 	BayesFactor package: Morey, R. D., & Rouder, J. N. (2024). BayesFactor: Computation of Bayes factors for common										designs. R package version 0.9.12-4.7.
 
-Within this script you can:
 
-* Enable or disable H1–H3
-* Enable or disable H4–H6
+2.1 How to run:
+
+All analyses are run with Run_All.m in tACSChallenge_Project/scripts/
+
+Within this script:
+
+* Enable or disable H1-H3
+* Enable or disable H4-H6, and single hypotheses within them
 * Select which labs to include
-* Run the full analysis
+* Set the number of permutations (standard 1000)
+* Force a rebuild that ignores PhaseMatrics and AnalysisTable files that are already in the lab folders. 
 
-No other scripts need to be run manually.
+No other script needs to be run manually.
 
-Important: Run_all.m assumes a specific folder structure and separates:
 
-⦁	Data storage from each Lab
-⦁	Analysis functions
-⦁	Results output
-⦁	Main script
+!H1-H3 must be run at least once before H4-H6, because H4-H6 read the PhaseMetrics.mat file that H1-H3 writes into each lab folder.
 
-Please follow the required structure below to ensure that the analyses run correctly and remain comparable across labs.
+!Behavioral files and Metadata must follow SOP 5.
 
-*Required Folder Structure*
+
+By default lab_ids is empty, which analyses every lab folder found in data/.
+Set it to e.g. lab_ids = [3 45], to restrict the analysis.
+
+
+The project root is taken from the location of Run_All.m. 
+No paths need editing as long as the folder structure is followed (see 2.2 below).
+
+
+2.2 Folder structure:
 
 tACSChallenge_Project/
-│
-├── data/
-│   ├── L01/
-│   ├── L02/
-│   ├── L18/
-│   │   ├── sub-L18_S01/
-│   │   │   ├── beh/
-│   │   │   └── metadata/
-│   │   ├── sub-L18_S02/
-│   │   └── PhaseMetrics.mat   (created automatically after running H1-3)
-│   └── ...
-│
-├── functions/
-│   ├── tACSChallenge_ImportData.m
-│   ├── tACSChallenge_SortData.m
-│   ├── tACSChallenge_EvalData.m
-│   ├── tACSChallenge_AnalyseData.m
-│   ├── tACSChallenge_buildAnalysisTable.m
-│   ├── tACSChallenge_runGlobalModels.m
-│   ├── tACSChallenge_runH1H2H3_pooled.m
-│   ├── tACSChallenge_runH4H5H6.m
-│   ├── helper functions (*.m)
-│   └── circular_statistics_toolbox/
-│
-├── results/
-│   ├── H1H2H3/
-│   └── H4H5H6/
-│
-└── scripts/
-    └── Run_All.m
----
+|
+|-- data/
+|   |-- L01/
+|   |-- L02/
+|   |-- L18/
+|   |   |-- sub-L18_S01/
+|   |   |   |-- beh/
+|   |   |   |-- metadata/
+|   |   |-- sub-L18_S02/
+|   |   |-- PhaseMetrics.mat    (created automatically by H1-H3)
+|   |   |-- AnalysisTable.mat   (created automatically by H4-H6)
+|   |-- ...
+|
+|-- functions/
+|   |-- tACSChallenge_ImportData.m         	read one block file
+|   |-- tACSChallenge_SortData.m           	trials and tACS phase per participant
+|   |-- tACSChallenge_EvalData.m           	phase regression and permutations
+|   |-- tACSChallenge_buildAnalysisTable.m 	one row per participant per condition
+|   |-- tACSChallenge_runH1H2H3_Pooled.m   	H1 to H3
+|   |-- tACSChallenge_runH4H5H6.m          	wrapper for H4 to H6
+|   |-- tACSChallenge_runGlobalModels.m    	H4, H5, H6 LMMs
+|   |-- tsc_parse_beh_filename.m           	parse lab, subject, block, condition
+|   |-- tsc_perf_from_sorted.m             	hits, false alarms, d', criterion, RT
+|   |-- tACS_bayesFactorBIC.m              	Bayes factors
+|   |-- tACS_condColours.m                 	shared figure palette for conditions
+|   |-- tACS_raincloudPanel.m              	raincloud panels (H2, H5, H6)
+|   |-- tACS_scatterPanel.m                	scatter panels (H4)
+|   |-- circstat/                          	download and add to this folder 
+|
+|
+|-- bayes/       				Bayes factors for H1 and H2, see bayes/ReadMe.txt
+|
+|-- results/
+|   |-- H1H2H3/
+|   |-- H4H5H6/
+|
+|-- scripts/
+    |-- Run_All.m
 
 
-Otherwise important:
 
-The file `PhaseMetrics.mat` is created automatically when running H1–H3
-It is stored inside each lab folder
-This file is required for Hypothesis 4 and must not be moved manually
-
----
-
-Where to find results
-
-All outputs are written to the results folder (`results/`).
-
-H1–H3 results will be pooled across all labs, no per-lab result is saved by default. 
-Subfolders for each hypothesis will be created upon running H1-3, in which figures and statistics can be found.
-
-results/H1H2H3/
-├── H1/
-│   ├── figures
-│   └── H1_results.txt
-├── H2/
-│   ├── figures
-│   └── H2_results.txt
-└── H3/
-    └── H3_results.txt
-```
-
-
-H4–H6 Results
-Results are saved per hypothesis as well, and output will include mixed effects models and figures.
-```
+3. Output is written to the results folder, by hypothesis.
+ 
+results/H1H2H3/pooled/
+|-- H1/   figures, H1_results.txt
+|-- H2/   figures, H2_results.txt
+|-- H3/   H3_results.txt
+|-- H1H2H3_pooled_metrics.mat
+ 
 results/H4H5H6/
-├── H4/
-│   ├── figures
-│   └── model reports
-├── H5/
-│   ├── figures
-│   └── model reports
-└── H6/
-    ├── figures
-    └── model reports
-```
+|-- H4/   figures, model report
+|-- H5/   figures, model report
+|-- H6/   figures, model report
+|-- AnalysisTable_allLabs.mat / .csv
+
+
+
+4. Bayesian Analyses
+ 
+Bayes factors are preregistered for every hypothesis, but the protocol does
+not specify how they are computed.
+
+See bayes_ReadMe.txt in /bayes for details on what was done here. 
